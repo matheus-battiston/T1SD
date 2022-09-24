@@ -28,16 +28,21 @@ type URB_Ind_Message struct {
 	Message string
 }
 
+type ACKS struct {
+	Message     string
+	quantosAcks int
+}
+
 type URB_Module struct {
-	Ind       chan URB_Ind_Message
-	Req       chan URB_Req_Message
-	Quit      chan bool
-	beb       BestEffortBroadcast_Module
-	pending   []string
-	delivered []string
-	acks      [][]string
-	addresses []string
-	dbg       bool
+	Ind          chan URB_Ind_Message
+	Req          chan URB_Req_Message
+	Quit         chan bool
+	beb          BestEffortBroadcast_Module
+	pending      []string
+	delivered    []string
+	addresses    []string
+	dbg          bool
+	listaComACKS []ACKS
 }
 
 func (module *URB_Module) foiEntrege(message string) bool {
@@ -76,22 +81,22 @@ func (module *URB_Module) estaPendente(message string) bool {
 
 func (module *URB_Module) adicionaAck(message URB_Ind_Message) {
 	if !module.estaNosAcks(message.Message) {
-		primeiroElemento := []string{message.Message}
-		module.acks = append(module.acks, primeiroElemento)
+		module.listaComACKS = append(module.listaComACKS, ACKS{
+			Message:     message.Message,
+			quantosAcks: 0,
+		})
 	}
 
-	for i := 0; i < len(module.acks); i++ {
-		if module.acks[i][0] == message.Message {
-			if module.naoTemAck(message.From, module.acks[i][0]) {
-				module.acks[i] = append(module.acks[i], message.From)
-			}
+	for i := 0; i < len(module.listaComACKS); i++ {
+		if module.listaComACKS[i].Message == message.Message {
+			module.listaComACKS[i].quantosAcks++
 		}
 	}
 }
 
 func (module *URB_Module) estaNosAcks(message string) bool {
-	for i := 0; i < len(module.acks); i++ {
-		if module.acks[i][0] == message {
+	for i := 0; i < len(module.listaComACKS); i++ {
+		if module.listaComACKS[i].Message == message {
 			return true
 		}
 	}
@@ -114,9 +119,9 @@ func (module *URB_Module) outDbg(s string) {
 }
 
 func (module *URB_Module) canDeliver(message string) bool {
-	for i := 0; i < len(module.acks); i++ {
-		if message == module.acks[i][0] {
-			if len(module.acks[i]) > ((len(module.addresses) - 1) / 2) {
+	for i := 0; i < len(module.listaComACKS); i++ {
+		if message == module.listaComACKS[i].Message {
+			if module.listaComACKS[i].quantosAcks > ((len(module.addresses) - 1) / 2) {
 				return true
 			}
 		}
@@ -134,8 +139,8 @@ func (module *URB_Module) InitD(address string, _dbg bool, addresses []string) {
 	module.dbg = _dbg
 	module.outDbg("Init URB!")
 	module.beb = BestEffortBroadcast_Module{
-		Req: make(chan BestEffortBroadcast_Req_Message),
-		Ind: make(chan BestEffortBroadcast_Ind_Message)}
+		Req: make(chan BestEffortBroadcast_Req_Message, 100),
+		Ind: make(chan BestEffortBroadcast_Ind_Message, 100)}
 	module.beb.Init(address)
 
 	module.Start()
@@ -147,14 +152,10 @@ func (module *URB_Module) Start() {
 		for {
 			select {
 			case y := <-module.Req:
-				if !module.estaPendente(y.Message) {
-					module.pending = append(module.pending, y.Message)
-				}
 				module.Broadcast(y)
 
 			case y := <-module.beb.Ind:
 				module.adicionaAck(URB_Ind_Message(y))
-
 				if module.canDeliver(y.Message) && module.estaPendente(y.Message) && !module.foiEntrege(y.Message) {
 					module.Deliver(URB_Ind_Message(y))
 				} else if !module.estaPendente(y.Message) {
@@ -172,15 +173,17 @@ func (module *URB_Module) Start() {
 }
 
 func (module *URB_Module) quit() {
-	fmt.Println("QUITOU URB")
 	close(module.Ind)
 
 }
 
 func (module *URB_Module) Broadcast(message URB_Req_Message) {
 
+	if !module.estaPendente(message.Message) {
+		module.pending = append(module.pending, message.Message)
+	}
 	req := BestEffortBroadcast_Req_Message{
-		Addresses: message.Addresses,
+		Addresses: module.addresses,
 		Message:   message.Message}
 	module.beb.Req <- req
 }

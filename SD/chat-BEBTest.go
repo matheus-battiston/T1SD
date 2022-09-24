@@ -31,11 +31,10 @@ func main() {
 
 	var registro []string
 	addresses := os.Args[1:]
-	fmt.Println(addresses)
 
 	urb := URB_Module{
-		Req: make(chan URB_Req_Message),
-		Ind: make(chan URB_Ind_Message)}
+		Req: make(chan URB_Req_Message, 100),
+		Ind: make(chan URB_Ind_Message, 100)}
 
 	urb.Init(addresses[0], addresses[0:])
 
