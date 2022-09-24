@@ -21,7 +21,6 @@ import (
 
 func main() {
 
-	fmt.Println("arere")
 	if len(os.Args) < 2 {
 		fmt.Println("Please specify at least one address:port!")
 		fmt.Println("go run chat-BEBTest.go 127.0.0.1:5001  127.0.0.1:6001 127.0.0.1:7001")
@@ -51,6 +50,7 @@ func main() {
 				msg = scanner.Text()
 				msg += "§" + addresses[0]
 			}
+
 			req := URB_Req_Message{
 				Addresses: addresses[0:],
 				Message:   msg}
@@ -60,15 +60,21 @@ func main() {
 
 	// receptor de broadcasts
 	go func() {
+
 		for {
 			in := <-urb.Ind
 			message := strings.Split(in.Message, "§")
 			in.From = message[1]
-			registro = append(registro, in.Message)
+			registro = append(registro, strings.Split(in.Message, "§")[0])
+
 			in.Message = message[0]
 
 			// imprime a mensagem recebida na tela
 			fmt.Printf("          Message from %v: %v\n", in.From, in.Message)
+
+			if len(registro) == 5 {
+				os.Exit(0)
+			}
 		}
 	}()
 

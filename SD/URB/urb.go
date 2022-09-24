@@ -30,6 +30,7 @@ type URB_Ind_Message struct {
 type URB_Module struct {
 	Ind       chan URB_Ind_Message
 	Req       chan URB_Req_Message
+	Quit      chan bool
 	beb       BestEffortBroadcast_Module
 	pending   []string
 	delivered []string
@@ -56,7 +57,6 @@ func RemoveIndex(s []string, index int) []string {
 
 func (module *URB_Module) getIndex(message string) int {
 	for i := 0; i < len(module.pending); i++ {
-		fmt.Println(module.pending[i], message)
 		if module.pending[i] == message {
 			return i
 		}
@@ -170,6 +170,12 @@ func (module *URB_Module) Start() {
 	}()
 }
 
+func (module *URB_Module) quit() {
+	fmt.Println("QUITOU URB")
+	close(module.Ind)
+
+}
+
 func (module *URB_Module) Broadcast(message URB_Req_Message) {
 
 	req := BestEffortBroadcast_Req_Message{
@@ -182,7 +188,6 @@ func (module *URB_Module) Deliver(message URB_Ind_Message) {
 
 	module.delivered = append(module.delivered, message.Message)
 	index := module.getIndex(message.Message)
-	fmt.Println(index)
 	module.pending = RemoveIndex(module.pending, index)
 	// fmt.Println("Received '" + message.Message + "' from " + message.From)
 	module.Ind <- message

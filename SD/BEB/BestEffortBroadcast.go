@@ -1,11 +1,13 @@
 /*
-  Construido como parte da disciplina: Sistemas Distribuidos - PUCRS - Escola Politecnica
-  Professor: Fernando Dotti  (https://fldotti.github.io/)
-  Modulo representando Berst Effort Broadcast tal como definido em:
-    Introduction to Reliable and Secure Distributed Programming
-    Christian Cachin, Rachid Gerraoui, Luis Rodrigues
-  * Semestre 2018/2 - Primeira versao.  Estudantes:  Andre Antonitsch e Rafael Copstein
-  Para uso vide ao final do arquivo, ou aplicacao chat.go que usa este
+Construido como parte da disciplina: Sistemas Distribuidos - PUCRS - Escola Politecnica
+Professor: Fernando Dotti  (https://fldotti.github.io/)
+Modulo representando Berst Effort Broadcast tal como definido em:
+
+	Introduction to Reliable and Secure Distributed Programming
+	Christian Cachin, Rachid Gerraoui, Luis Rodrigues
+
+* Semestre 2018/2 - Primeira versao.  Estudantes:  Andre Antonitsch e Rafael Copstein
+Para uso vide ao final do arquivo, ou aplicacao chat.go que usa este
 */
 package BestEffortBroadcast
 
