@@ -153,7 +153,6 @@ func (module *URB_Module) Start() {
 			select {
 			case y := <-module.Req:
 				module.Broadcast(y)
-
 			case y := <-module.beb.Ind:
 				module.adicionaAck(URB_Ind_Message(y))
 				if module.canDeliver(y.Message) && module.estaPendente(y.Message) && !module.foiEntrege(y.Message) {
