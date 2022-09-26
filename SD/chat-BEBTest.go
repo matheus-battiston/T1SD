@@ -15,12 +15,35 @@ import (
 	. "SD/URB"
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
-func enviarBroadcasts(numeroInt int, addresses []string, urb URB_Module) {
+func enviarBroadcastsComFalha(numeroInt int, addresses []string, urb URB_Module) {
+	var msg string
+
+	for i := 0; i < 1000; i++ {
+		numeroDaMsg := numeroInt + i
+		numeroDaMsgString := strconv.Itoa(numeroDaMsg)
+		msg = numeroDaMsgString + string("§") + string(addresses[0])
+		if numeroDaMsg == 8000 {
+			req := URB_Req_Message{
+				Addresses: addresses[2:3],
+				Message:   msg}
+			urb.Req <- req
+			<-urb.Ind
+		} else {
+			req := URB_Req_Message{
+				Addresses: addresses[0:],
+				Message:   msg}
+			urb.Req <- req
+		}
+	}
+}
+
+func enviarBroadcastsSemFalha(numeroInt int, addresses []string, urb URB_Module) {
 	var msg string
 
 	for i := 0; i < 1000; i++ {
@@ -32,6 +55,25 @@ func enviarBroadcasts(numeroInt int, addresses []string, urb URB_Module) {
 			Message:   msg}
 		urb.Req <- req
 	}
+}
+
+func Write(fileName string, message []string) {
+
+	f, err := os.Create(fileName)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+	for i := 0; i < len(message); i++ {
+		_, err2 := f.WriteString(message[i] + "\n")
+
+		if err2 != nil {
+			log.Fatal(err2)
+		}
+	}
+	fmt.Println("done")
 }
 
 func main() {
@@ -56,13 +98,19 @@ func main() {
 	// enviador de broadcasts
 	go func() {
 
+		var msg string
 		scanner := bufio.NewScanner(os.Stdin)
 		numero := strings.Split(addresses[0], ":")[1]
 		numeroInt, err := strconv.Atoi(numero)
 		fmt.Println(numeroInt, err)
 
 		if scanner.Scan() {
-			enviarBroadcasts(numeroInt, addresses, urb)
+			msg = scanner.Text()
+			if msg == "1" {
+				enviarBroadcastsComFalha(numeroInt, addresses, urb)
+			} else if msg == "2" {
+				enviarBroadcastsSemFalha(numeroInt, addresses, urb)
+			}
 		}
 	}()
 
@@ -73,8 +121,7 @@ func main() {
 			in := <-urb.Ind
 			numero := strings.Split(addresses[0], ":")[1]
 			numeroInt, err := strconv.Atoi(numero)
-			fmt.Println(numeroInt, err)
-
+			_ = err
 			message := strings.Split(in.Message, "§")
 			in.From = message[1]
 			registro = append(registro, strings.Split(in.Message, "§")[0])
@@ -83,10 +130,13 @@ func main() {
 			// imprime a mensagem recebida na tela
 			fmt.Printf("          Message from %v: %v\n", in.From, in.Message)
 
+			fmt.Println(len(registro), "ABCDE")
 			if len(registro) == 1 && in.From != addresses[0] {
-				go enviarBroadcasts(numeroInt, addresses, urb)
+				go enviarBroadcastsSemFalha(numeroInt, addresses, urb)
 			}
 			if len(registro) == 4000 {
+				fmt.Println(registro)
+				Write((addresses[0])+".txt", registro)
 				os.Exit(0)
 			}
 		}

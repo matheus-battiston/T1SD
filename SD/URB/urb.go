@@ -30,6 +30,7 @@ type URB_Ind_Message struct {
 
 type ACKS struct {
 	Message     string
+	quemDeuAck  []string
 	quantosAcks int
 }
 
@@ -88,10 +89,21 @@ func (module *URB_Module) adicionaAck(message URB_Ind_Message) {
 	}
 
 	for i := 0; i < len(module.listaComACKS); i++ {
-		if module.listaComACKS[i].Message == message.Message {
+		if module.listaComACKS[i].Message == message.Message && naoDeuAckAinda(message.From, module.listaComACKS[i].quemDeuAck) {
 			module.listaComACKS[i].quantosAcks++
+			module.listaComACKS[i].quemDeuAck = append(module.listaComACKS[i].quemDeuAck, message.From)
+			fmt.Println(module.listaComACKS[i])
 		}
 	}
+}
+
+func naoDeuAckAinda(quemEh string, listaDeAcks []string) bool {
+	for i := 0; i < len(listaDeAcks); i++ {
+		if listaDeAcks[i] == quemEh {
+			return false
+		}
+	}
+	return true
 }
 
 func (module *URB_Module) estaNosAcks(message string) bool {
@@ -121,7 +133,8 @@ func (module *URB_Module) outDbg(s string) {
 func (module *URB_Module) canDeliver(message string) bool {
 	for i := 0; i < len(module.listaComACKS); i++ {
 		if message == module.listaComACKS[i].Message {
-			if module.listaComACKS[i].quantosAcks > ((len(module.addresses) - 1) / 2) {
+			fmt.Println(len(module.addresses), module.listaComACKS[i], "AQUI")
+			if module.listaComACKS[i].quantosAcks > ((len(module.addresses)) / 2) {
 				return true
 			}
 		}

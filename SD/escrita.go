@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func Write(fileName string, message []string) {
+func Writeasdasd(fileName string, message []string) {
 
 	f, err := os.Create(fileName)
 
@@ -27,5 +27,5 @@ func Write(fileName string, message []string) {
 
 func main() {
 	x := []string{"oi", "matheus"}
-	Write("teste.txt", x)
+	Writeasdasd("teste.txt", x)
 }
