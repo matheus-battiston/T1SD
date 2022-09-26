@@ -16,8 +16,23 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
+
+func enviarBroadcasts(numeroInt int, addresses []string, urb URB_Module) {
+	var msg string
+
+	for i := 0; i < 1000; i++ {
+		numeroDaMsg := numeroInt + i
+		numeroDaMsgString := strconv.Itoa(numeroDaMsg)
+		msg = numeroDaMsgString + string("§") + string(addresses[0])
+		req := URB_Req_Message{
+			Addresses: addresses[0:],
+			Message:   msg}
+		urb.Req <- req
+	}
+}
 
 func main() {
 
@@ -33,8 +48,8 @@ func main() {
 	addresses := os.Args[1:]
 
 	urb := URB_Module{
-		Req: make(chan URB_Req_Message, 100),
-		Ind: make(chan URB_Ind_Message, 100)}
+		Req: make(chan URB_Req_Message, 10000),
+		Ind: make(chan URB_Ind_Message, 10000)}
 
 	urb.Init(addresses[0], addresses[0:])
 
@@ -42,18 +57,12 @@ func main() {
 	go func() {
 
 		scanner := bufio.NewScanner(os.Stdin)
-		var msg string
+		numero := strings.Split(addresses[0], ":")[1]
+		numeroInt, err := strconv.Atoi(numero)
+		fmt.Println(numeroInt, err)
 
-		for {
-			if scanner.Scan() {
-				msg = scanner.Text()
-				msg += "§" + addresses[0]
-			}
-
-			req := URB_Req_Message{
-				Addresses: addresses[0:],
-				Message:   msg}
-			urb.Req <- req
+		if scanner.Scan() {
+			enviarBroadcasts(numeroInt, addresses, urb)
 		}
 	}()
 
@@ -62,16 +71,22 @@ func main() {
 
 		for {
 			in := <-urb.Ind
+			numero := strings.Split(addresses[0], ":")[1]
+			numeroInt, err := strconv.Atoi(numero)
+			fmt.Println(numeroInt, err)
+
 			message := strings.Split(in.Message, "§")
 			in.From = message[1]
 			registro = append(registro, strings.Split(in.Message, "§")[0])
-
 			in.Message = message[0]
 
 			// imprime a mensagem recebida na tela
 			fmt.Printf("          Message from %v: %v\n", in.From, in.Message)
 
-			if len(registro) == 5 {
+			if len(registro) == 1 && in.From != addresses[0] {
+				go enviarBroadcasts(numeroInt, addresses, urb)
+			}
+			if len(registro) == 4000 {
 				os.Exit(0)
 			}
 		}

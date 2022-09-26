@@ -139,8 +139,8 @@ func (module *URB_Module) InitD(address string, _dbg bool, addresses []string) {
 	module.dbg = _dbg
 	module.outDbg("Init URB!")
 	module.beb = BestEffortBroadcast_Module{
-		Req: make(chan BestEffortBroadcast_Req_Message, 100),
-		Ind: make(chan BestEffortBroadcast_Ind_Message, 100)}
+		Req: make(chan BestEffortBroadcast_Req_Message, 10000),
+		Ind: make(chan BestEffortBroadcast_Ind_Message, 10000)}
 	module.beb.Init(address)
 
 	module.Start()

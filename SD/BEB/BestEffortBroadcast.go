@@ -48,8 +48,8 @@ func (module *BestEffortBroadcast_Module) InitD(address string, _dbg bool) {
 	module.dbg = _dbg
 	module.outDbg("Init BEB!")
 	module.Pp2plink = PP2PLink.PP2PLink{
-		Req: make(chan PP2PLink.PP2PLink_Req_Message, 100),
-		Ind: make(chan PP2PLink.PP2PLink_Ind_Message, 100)}
+		Req: make(chan PP2PLink.PP2PLink_Req_Message, 10000),
+		Ind: make(chan PP2PLink.PP2PLink_Ind_Message, 10000)}
 	module.Pp2plink.InitD(address, _dbg)
 	module.Start()
 }
