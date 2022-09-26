@@ -21,6 +21,37 @@ import (
 	"strings"
 )
 
+type envios struct {
+	nome              string
+	mensagensEnviadas int
+}
+
+func adicionaRecebido(quemMandou string, listaQuemMandou []envios) []envios {
+	if !jaMandouMensagem(quemMandou, listaQuemMandou) {
+		listaQuemMandou = append(listaQuemMandou, envios{
+			nome:              quemMandou,
+			mensagensEnviadas: 0})
+	}
+
+	for x := 0; x < len(listaQuemMandou); x++ {
+		if listaQuemMandou[x].nome == quemMandou {
+			listaQuemMandou[x].mensagensEnviadas++
+		}
+	}
+
+	return listaQuemMandou
+
+}
+
+func jaMandouMensagem(nome string, listaQuemMandou []envios) bool {
+	for i := 0; i < len(listaQuemMandou); i++ {
+		if listaQuemMandou[i].nome == nome {
+			return true
+		}
+	}
+	return false
+}
+
 func enviarBroadcastsComFalha(numeroInt int, addresses []string, urb URB_Module) {
 	var msg string
 
@@ -86,6 +117,7 @@ func main() {
 		return
 	}
 
+	var contagemDeEnvios []envios
 	var registro []string
 	addresses := os.Args[1:]
 
@@ -102,7 +134,7 @@ func main() {
 		scanner := bufio.NewScanner(os.Stdin)
 		numero := strings.Split(addresses[0], ":")[1]
 		numeroInt, err := strconv.Atoi(numero)
-		fmt.Println(numeroInt, err)
+		_ = err
 
 		if scanner.Scan() {
 			msg = scanner.Text()
@@ -123,6 +155,7 @@ func main() {
 			numeroInt, err := strconv.Atoi(numero)
 			_ = err
 			message := strings.Split(in.Message, "§")
+			contagemDeEnvios = adicionaRecebido(message[1], contagemDeEnvios)
 			in.From = message[1]
 			registro = append(registro, strings.Split(in.Message, "§")[0])
 			in.Message = message[0]
@@ -130,12 +163,11 @@ func main() {
 			// imprime a mensagem recebida na tela
 			fmt.Printf("          Message from %v: %v\n", in.From, in.Message)
 
-			fmt.Println(len(registro), "ABCDE")
 			if len(registro) == 1 && in.From != addresses[0] {
 				go enviarBroadcastsSemFalha(numeroInt, addresses, urb)
 			}
 			if len(registro) == 4000 {
-				fmt.Println(registro)
+				fmt.Println(contagemDeEnvios, "ContagemEnvios")
 				Write((addresses[0])+".txt", registro)
 				os.Exit(0)
 			}

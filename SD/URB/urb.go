@@ -14,8 +14,6 @@ package Urb
 import (
 	. "SD/BEB"
 	"fmt"
-	"log"
-	"os"
 )
 
 type URB_Req_Message struct {
@@ -92,7 +90,6 @@ func (module *URB_Module) adicionaAck(message URB_Ind_Message) {
 		if module.listaComACKS[i].Message == message.Message && naoDeuAckAinda(message.From, module.listaComACKS[i].quemDeuAck) {
 			module.listaComACKS[i].quantosAcks++
 			module.listaComACKS[i].quemDeuAck = append(module.listaComACKS[i].quemDeuAck, message.From)
-			fmt.Println(module.listaComACKS[i])
 		}
 	}
 }
@@ -133,7 +130,6 @@ func (module *URB_Module) outDbg(s string) {
 func (module *URB_Module) canDeliver(message string) bool {
 	for i := 0; i < len(module.listaComACKS); i++ {
 		if message == module.listaComACKS[i].Message {
-			fmt.Println(len(module.addresses), module.listaComACKS[i], "AQUI")
 			if module.listaComACKS[i].quantosAcks > ((len(module.addresses)) / 2) {
 				return true
 			}
@@ -208,23 +204,4 @@ func (module *URB_Module) Deliver(message URB_Ind_Message) {
 	// fmt.Println("Received '" + message.Message + "' from " + message.From)
 	module.Ind <- message
 	// fmt.Println("# End BEB Received")
-}
-
-func Write(fileName string, message []string) {
-
-	f, err := os.Create(fileName)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-	for i := 0; i < len(message); i++ {
-		_, err2 := f.WriteString(message[i] + "\n")
-
-		if err2 != nil {
-			log.Fatal(err2)
-		}
-	}
-	fmt.Println("done")
 }
