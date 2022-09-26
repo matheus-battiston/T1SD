@@ -166,7 +166,7 @@ func main() {
 			if len(registro) == 1 && in.From != addresses[0] {
 				go enviarBroadcastsSemFalha(numeroInt, addresses, urb)
 			}
-			if len(registro) == 4000 {
+			if len(registro) == len(addresses)*1000 {
 				fmt.Println(contagemDeEnvios, "ContagemEnvios")
 				Write((addresses[0])+".txt", registro)
 				os.Exit(0)
